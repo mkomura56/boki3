@@ -1,0 +1,882 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>簿記3級 演習トラッカー（本対応版）</title>
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#1A2E22" />
+<link rel="icon" href="icon.svg" type="image/svg+xml" />
+<style>
+
+:root {
+  --bg: #F5F7F2; --card: #FFFFFF; --ink: #1A2E22; --ink-soft: #25402F; --muted: #5B6B5E; --faint: #8A9587;
+  --line: #D8E0D2; --line-soft: #EEF1EA; --green: #2F6F4E; --green-bg: #E1EEE6;
+  --amber: #A97B12; --amber-bg: #F3EBD8; --rust: #B4451F; --rust-bg: #F6E4DB;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: "Hiragino Sans", "Yu Gothic", "Noto Sans JP", system-ui, sans-serif; }
+#app { min-height: 100vh; max-width: 480px; margin: 0 auto; background: var(--bg); }
+button { font-family: inherit; cursor: pointer; }
+.mono { font-family: "SFMono-Regular", ui-monospace, Menlo, Consolas, monospace; font-variant-numeric: tabular-nums; }
+.px-6 { padding-left: 24px; padding-right: 24px; }
+.pt-8 { padding-top: 32px; } .pt-4 { padding-top: 16px; }
+.pb-5 { padding-bottom: 20px; } .pb-8 { padding-bottom: 32px; }
+.mb-6 { margin-bottom: 24px; } .mt-6 { margin-top: 24px; } .mb32 { margin-bottom: 32px; }
+.eyebrow { color: var(--muted); font-size: 12px; margin-bottom: 4px; }
+.h1 { font-size: 24px; font-weight: 700; margin: 0; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; }
+.stat { padding: 16px; }
+.stat-label { color: var(--muted); font-size: 12px; margin-bottom: 4px; }
+.stat-value { font-size: 30px; font-weight: 700; font-family: ui-monospace, monospace; }
+.stat-sub { font-size: 15px; color: var(--faint); }
+.exam-btn { width: 100%; display: flex; align-items: center; justify-content: space-between; border: none; border-radius: 10px; background: var(--ink); color: var(--bg); padding: 16px; font-size: 14px; font-weight: 500; }
+.exam-btn:hover:not(:disabled) { background: var(--ink-soft); }
+.exam-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.exam-btn-left { display: flex; align-items: center; gap: 6px; }
+.exam-btn-score { color: #C9D3C2; }
+.exam-sub { color: var(--faint); font-size: 11px; margin-top: 6px; padding-left: 4px; }
+.insight { display: flex; align-items: center; gap: 8px; border-radius: 8px; padding: 10px 12px; font-size: 14px; }
+.insight-weak { background: var(--rust-bg); }
+.section-label { color: var(--muted); font-size: 12px; margin-bottom: 8px; }
+.section-label.left { text-align: left; }
+.list { display: flex; flex-direction: column; }
+.list > * { border-bottom: 1px solid var(--line-soft); }
+.list > *:last-child { border-bottom: none; }
+.stage-item { display: flex; align-items: stretch; }
+.stage-item-dim { opacity: 0.55; }
+.read-toggle { width: 44px; flex-shrink: 0; background: none; border: none; display: flex; align-items: center; justify-content: center; }
+.read-toggle:hover { background: var(--bg); }
+.check-on { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 999px; background: var(--green); color: white; font-size: 12px; }
+.check-off { display: inline-block; width: 18px; height: 18px; border-radius: 999px; border: 2px solid var(--line); }
+.stage-row { display: flex; align-items: center; gap: 12px; flex: 1; background: none; border: none; padding: 14px 16px 14px 4px; text-align: left; min-width: 0; }
+.stage-row:hover { background: var(--bg); }
+.stage-row-main { flex: 1; min-width: 0; }
+.stage-row-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.stage-title { font-size: 14px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bar-track { height: 6px; width: 100%; background: var(--line-soft); border-radius: 999px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 999px; }
+.stage-sub { color: var(--faint); font-size: 11px; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chev { color: var(--faint); }
+.tone-neutral { color: var(--faint); } .tone-weak { color: var(--rust); } .tone-mid { color: var(--amber); } .tone-strong { color: var(--green); }
+.tone-weak-bg { background: var(--rust); } .tone-mid-bg { background: var(--amber); } .tone-strong-bg { background: var(--green); } .tone-neutral-bg { background: var(--line); }
+.review-btn { width: 100%; display: flex; align-items: center; justify-content: space-between; border: 1px solid var(--line); background: var(--card); border-radius: 10px; padding: 14px 16px; font-size: 14px; }
+.review-btn:hover:not(:disabled) { background: var(--bg); }
+.review-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.topbar { display: flex; align-items: center; gap: 12px; padding: 16px 20px; border-bottom: 1px solid var(--line); background: var(--bg); position: sticky; top: 0; z-index: 5; }
+.back-btn { background: none; border: none; color: var(--muted); font-size: 18px; }
+.back-btn:hover { color: var(--ink); }
+.topbar-title { flex: 1; font-weight: 600; font-size: 14px; }
+.timer { font-size: 14px; } .timer-low { color: var(--rust); }
+.progress-dots { display: flex; gap: 4px; max-width: 440px; margin: 0 auto; }
+.dot { height: 4px; flex: 1; border-radius: 999px; }
+.dot-done { background: var(--ink); } .dot-current { background: var(--faint); } .dot-todo { background: var(--line); }
+.quiz-wrap { display: flex; justify-content: center; padding: 24px; }
+.quiz-inner { width: 100%; max-width: 440px; }
+.qcard { padding: 20px; }
+.qcard-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 8px; }
+.muted { color: var(--muted); }
+.diff-badge { font-size: 11px; border-radius: 999px; padding: 2px 8px; font-family: ui-monospace, monospace; border: 1px solid; white-space: nowrap; }
+.diff-basic { color: var(--green); border-color: rgba(47,111,78,0.4); }
+.diff-standard { color: var(--amber); border-color: rgba(169,123,18,0.4); }
+.diff-advanced { color: var(--rust); border-color: rgba(180,69,31,0.4); }
+.qprompt { font-size: 16px; line-height: 1.7; margin: 0 0 20px 0; }
+.opt-list { display: flex; flex-direction: column; gap: 8px; }
+.opt { text-align: left; border: 1px solid var(--line); background: var(--card); border-radius: 6px; padding: 10px 12px; font-size: 14px; color: var(--ink); }
+.opt:hover:not(:disabled) { border-color: rgba(26,46,34,0.4); }
+.opt-selected { border-color: var(--ink); background: var(--line-soft); }
+.opt-correct { border-color: var(--green); background: var(--green-bg); }
+.opt-wrong { border-color: var(--rust); background: var(--rust-bg); }
+.opt-dim { border-color: var(--line-soft); opacity: 0.5; }
+.mark-ok { color: var(--green); } .mark-ng { color: var(--rust); }
+.calc-row { display: flex; align-items: center; gap: 8px; }
+.calc-input { flex: 1; border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; font-size: 14px; font-family: ui-monospace, monospace; color: var(--ink); outline: none; }
+.calc-input:focus { border-color: rgba(26,46,34,0.4); }
+.calc-ok { border-color: var(--green); background: var(--green-bg); }
+.calc-ng { border-color: var(--rust); background: var(--rust-bg); }
+.unit { font-size: 14px; color: var(--muted); }
+.answer-note { margin-top: 8px; font-size: 12px; color: var(--muted); }
+.qactions { margin-top: 16px; display: flex; justify-content: flex-end; }
+.primary-btn { background: var(--ink); color: var(--bg); border: none; border-radius: 6px; padding: 10px 20px; font-size: 14px; font-weight: 500; }
+.primary-btn:hover:not(:disabled) { background: var(--ink-soft); }
+.primary-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.secondary-btn { background: none; color: var(--ink); border: 1px solid rgba(26,46,34,0.2); border-radius: 6px; padding: 10px 20px; font-size: 14px; font-weight: 500; }
+.secondary-btn:hover:not(:disabled) { background: rgba(26,46,34,0.05); }
+.secondary-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.center-wrap { min-height: calc(100vh - 0px); display: flex; align-items: center; justify-content: center; padding: 24px; }
+.center-inner { width: 100%; max-width: 380px; text-align: center; }
+.small { font-size: 12px; margin-bottom: 8px; }
+.big-score { font-size: 48px; margin-bottom: 8px; }
+.btn-row { display: flex; gap: 12px; justify-content: center; }
+.btn-row-end { display: flex; gap: 8px; justify-content: flex-end; }
+.nav-grid { max-width: 440px; margin: 0 auto; display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; }
+.navcell { height: 24px; border-radius: 4px; font-size: 10px; font-family: ui-monospace, monospace; border: 1px solid var(--line); background: var(--card); color: var(--faint); }
+.navcell-current { border-color: var(--ink); background: var(--ink); color: var(--bg); }
+.navcell-answered { border-color: rgba(47,111,78,0.4); background: var(--green-bg); color: var(--green); }
+.exam-nav-row { margin-top: 16px; display: flex; align-items: center; justify-content: space-between; }
+.confirm-box { margin-top: 16px; padding: 16px; font-size: 14px; }
+.confirm-box p { margin: 0 0 12px 0; }
+.exam-result-wrap { padding: 40px 24px; display: flex; justify-content: center; }
+.exam-result-inner { width: 100%; max-width: 380px; text-align: center; }
+.pass-badge { display: inline-block; font-size: 12px; font-weight: 500; border-radius: 999px; padding: 4px 12px; margin-bottom: 16px; }
+.pass-badge-ok { background: var(--green-bg); color: var(--green); }
+.pass-badge-ng { background: var(--rust-bg); color: var(--rust); }
+.stage-row-static { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; font-size: 14px; }
+
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+const RAW_STAGES = [
+  {
+    id: "c1",
+    title: "第1章　簿記の基礎～仕訳編～",
+    subtitle: "貸借対照表・損益計算書、借方・貸方の基本",
+    questions: [
+      { type: "mc", difficulty: "basic", prompt: "貸借対照表に記載されないものはどれか。", options: ["資産", "負債", "純資産", "費用"], answer: 3 },
+      { type: "mc", difficulty: "basic", prompt: "損益計算書の説明として正しいものはどれか。", options: ["一定期間の経営成績（収益と費用）を示す表", "ある一時点の財産の状態を示す表", "税務署に提出する納税申告書", "銀行に提出する融資申込書"], answer: 0 },
+      { type: "mc", difficulty: "basic", prompt: "「現金50,000円を元入れして開業した。」この取引の貸方科目は？", options: ["現金", "資本金", "売上", "借入金"], answer: 1 },
+      { type: "mc", difficulty: "standard", prompt: "資産・費用が増加（発生）したときに記入する側はどちらか。", options: ["借方（左）", "貸方（右）"], answer: 0 },
+      { type: "mc", difficulty: "standard", prompt: "負債・純資産・収益が増加（発生）したときに記入する側はどちらか。", options: ["借方（左）", "貸方（右）"], answer: 1 },
+      { type: "calc", difficulty: "standard", prompt: "期首資産500,000円、期首負債200,000円のとき、期首純資産はいくらか。", unit: "円", answer: 300000 },
+    ],
+  },
+  {
+    id: "c2",
+    title: "第2章　商品売買",
+    subtitle: "三分法、掛け取引、返品・値引、諸掛",
+    questions: [
+      { type: "mc", difficulty: "basic", prompt: "「商品30,000円を掛けで仕入れた。」この取引の借方科目は？", options: ["仕入", "買掛金", "売掛金", "現金"], answer: 0 },
+      { type: "mc", difficulty: "basic", prompt: "「得意先に商品50,000円を掛けで販売した。」この取引の貸方科目は？", options: ["売掛金", "売上", "仕入", "買掛金"], answer: 1 },
+      { type: "mc", difficulty: "standard", prompt: "「掛けで仕入れた商品のうち、品違いのため5,000円分を返品した。」この取引の貸方科目は？", options: ["仕入", "買掛金", "売掛金", "現金"], answer: 0 },
+      { type: "mc", difficulty: "standard", prompt: "仕入諸掛（商品を仕入れる際にかかった運送費）の会計処理として正しいものは？", options: ["仕入原価に含めて処理する", "発送費として別に処理する", "雑費として処理する", "処理しなくてよい"], answer: 0 },
+      { type: "mc", difficulty: "standard", prompt: "クレジットカードで商品を販売したときに生じる債権の科目は？", options: ["クレジット売掛金", "売掛金", "受取手形", "前受金"], answer: 0 },
+      { type: "calc", difficulty: "advanced", prompt: "期首商品棚卸高100,000円、当期仕入高500,000円、期末商品棚卸高80,000円のとき、売上原価はいくらか。", unit: "円", answer: 520000 },
+    ],
+  },
+  {
+    id: "c3",
+    title: "第3章　現金",
+    subtitle: "現金の範囲、現金過不足",
+    questions: [
+      { type: "mc", difficulty: "basic", prompt: "簿記上「現金」として扱われるものはどれか。", options: ["他人振出の小切手", "当座預金", "受取手形", "収入印紙"], answer: 0 },
+      { type: "mc", difficulty: "standard", prompt: "現金の帳簿残高より実際有高が少なかった場合に、一時的に使う科目は？", options: ["現金過不足", "雑損", "雑益", "貸倒損失"], answer: 0 },
+      { type: "calc", difficulty: "standard", prompt: "現金の帳簿残高が100,000円、実際有高が98,000円だった。現金過不足として処理する金額はいくらか。", unit: "円", answer: 2000 },
+      { type: "mc", difficulty: "advanced", prompt: "決算までに現金過不足の原因が判明しなかった場合、不足額はどの科目に振り替えるか。", options: ["雑損", "雑益", "現金過不足のまま残す", "貸倒損失"], answer: 0 },
+      { type: "mc", difficulty: "basic", prompt: "「現金50,000円を普通預金口座に預け入れた。」この取引の借方科目は？", options: ["普通預金", "現金", "当座預金", "定期預金"], answer: 0 },
+    ],
+  },
+  {
+    id: "c4",
+    title: "第4章　預金と当座借越",
+    subtitle: "普通預金・定期預金・当座預金・当座借越",
+    questions: [
+      { type: "mc", difficulty: "basic", prompt: "小切手を振り出して支払いをするための、利息のつかない銀行口座は？", options: ["当座預金", "普通預金", "定期預金", "小口現金"], answer: 0 },
+      { type: "mc", difficulty: "standard", prompt: "「買掛金30,000円の支払いとして小切手を振り出した。」この取引の貸方科目は？", options: ["当座預金", "現金", "買掛金", "受取手形"], answer: 0 },
+      { type: "mc", difficulty: "standard", prompt: "当座預金の残高を超えて小切手を振り出した場合に生じる、銀行からの一時的な借入を表す科目は？", options: ["当座借越", "借入金", "未払金", "当座預金"], answer: 0 },
+      { type: "mc", difficulty: "basic", prompt: "満期日を決めて預け入れ、一定期間は引き出さない前提の預金は？", options: ["定期預金", "当座預金", "普通預金", "小口現金"], answer: 0 },
+      { type: "calc", difficulty: "standard", prompt: "当座預金残高80,000円のとき、120,000円の小切手を振り出した。当座借越はいくら生じるか。", unit: "円", answer: 40000 },
+    ],
+  },
+  {
+    id: "c5",
+    title: "第5章　小口現金",
+    subtitle: "定額資金前渡制度（インプレスト・システム）",
+    questions: [
+      { type: "mc", difficulty: "basic", prompt: "日々の少額の支払いのために、あらかじめ現金係に一定額を渡しておく現金を何というか。", options: ["小口現金", "当座預金", "普通預金", "仮払金"], answer: 0 },
+      { type: "mc", difficulty: "standard", prompt: "あらかじめ一定額を前渡しし、使った分だけ定期的に補給する制度を何というか。", options: ["定額資金前渡制度（インプレスト・システム）", "差額補充法", "三分法", "税抜方式"], answer: 0 },
+      { type: "mc", difficulty: "standard", prompt: "「小口現金係から、交通費3,000円・消耗品費2,000円を支払った旨の報告を受けた。」このとき借方に計上する科目の組み合わせは？", options: ["旅費交通費・消耗品費", "小口現金・現金", "現金・小口現金", "旅費交通費・小口現金"], answer: 0 },
+      { type: "mc", difficulty: "basic", prompt: "小口現金の使用明細を記録する補助簿は？", options: ["小口現金出納帳", "現金出納帳", "商品有高帳", "仕訳帳"], answer: 0 },
+    ],
+  },
+  {
+    id: "c6",
+    title: "第6章　手形と電子記録債権(債務)",
+    subtitle: "約束手形、電子記録債権・債務",
+    questions: [
+      { type: "mc", difficulty: "basic", prompt: "「得意先振出の約束手形10,000円を受け取った。」この取引の借方科目は？", options: ["受取手形", "支払手形", "売掛金", "現金"], answer: 0 },
+      { type: "mc", difficulty: "basic", prompt: "「約束手形を振り出して仕入代金80,000円を支払った。」この取引の貸方科目は？", options: ["支払手形", "受取手形", "買掛金", "現金"], answer: 0 },
+      { type: "mc", difficulty: "standard", prompt: "電子記録債権の説明として正しいものは？", options: ["でんさいネット等を通じて電子的に記録された金銭債権", "紙の約束手形のこと", "貸倒引当金の一種", "純資産の勘定科目"], answer: 0 },
+      { type: "mc", difficulty: "standard", prompt: "電子記録債務は貸借対照表上どこに分類されるか。", options: ["負債", "資産", "純資産", "費用"], answer: 0 },
+      { type: "mc", difficulty: "advanced", prompt: "「電子記録債権の発生記録を行った。」取引先から見て、この取引で増加する科目のグループは？", options: ["資産", "負債", "純資産", "費用"], answer: 0 },
+    ],
+  },
+  {
+    id: "c7",
+    title: "第7章　貸付金・借入金",
+    subtitle: "貸付金、借入金、手形貸付金・手形借入金",
+    questions: [
+      { type: "mc", difficulty: "basic", prompt: "お金を貸しているときに使う資産の科目は？", options: ["貸付金", "借入金", "売掛金", "未収入金"], answer: 0 },
+      { type: "mc", difficulty: "basic", prompt: "銀行からお金を借りているときに使う負債の科目は？", options: ["借入金", "貸付金", "買掛金", "未払金"], answer: 0 },
+      { type: "mc", difficulty: "standard", prompt: "「手形貸付金」の説明として正しいものは？", options: ["金銭の貸付にあたり、借用証書の代わりに約束手形を受け取った場合の貸付金", "商品代金として受け取った手形", "手形を割り引いた際に生じる勘定", "支払手形の別名"], answer: 0 },
+      { type: "mc", difficulty: "standard", prompt: "「借入金のうち20,000円を現金で返済した。」この取引の借方科目は？", options: ["借入金", "現金", "支払利息", "未払金"], answer: 0 },
+      { type: "mc", difficulty: "advanced", prompt: "「借入金100,000円を返済し、あわせて利息2,000円を現金で支払った。」この取引の借方科目の組み合わせは？", options: ["借入金・支払利息", "借入金・受取利息", "貸付金・支払利息", "借入金のみ"], answer: 0 },
+    ],
+  },
+  {
+    id: "c8",
+    title: "第8章　その他の債権債務",
+    subtitle: "未収入金・未払金・前払金・前受金・仮払金・仮受金・立替金・預り金",
+    questions: [
+      { type: "mc", difficulty: "basic", prompt: "商品以外のもの（備品など）を売却し、代金を後日受け取る場合の資産の科目は？", options: ["未収入金", "売掛金", "未払金", "前受金"], answer: 0 },
+      { type: "mc", difficulty: "basic", prompt: "商品以外のものを購入し、代金を後日支払う場合の負債の科目は？", options: ["未払金", "買掛金", "未収入金", "前払金"], answer: 0 },
+      { type: "mc", difficulty: "standard", prompt: "商品を受け取る前に、代金の一部を手付金として支払ったときの資産の科目は？", options: ["前払金", "前受金", "仮払金", "買掛金"], answer: 0 },
+      { type: "mc", difficulty: "standard", prompt: "内容や金額が未確定のまま、とりあえず現金を支払ったときに使う科目は？", options: ["仮払金", "前払金", "未払金", "立替金"], answer: 0 },
+      { type: "mc", difficulty: "standard", prompt: "従業員が負担すべき費用を、会社が一時的に立て替えたときの資産の科目は？", options: ["従業員立替金", "従業員貸付金", "未収入金", "仮払金"], answer: 0 },
+      { type: "mc", difficulty: "advanced", prompt: "給料から所得税を天引きしたときに使う負債の科目は？", options: ["所得税預り金", "未払金", "仮受金", "従業員預り金"], answer: 0 },
+    ],
+  },
+  {
+    id: "c9",
+    title: "第9章　その他の費用",
+    subtitle: "消耗品費・通信費・水道光熱費・旅費交通費・支払手数料など",
+    questions: [
+      { type: "mc", difficulty: "basic", prompt: "文房具やコピー用紙などを買ったときに使う費用の科目は？", options: ["消耗品費", "備品", "雑費", "仕入"], answer: 0 },
+      { type: "mc", difficulty: "basic", prompt: "電話代やインターネット料金の支払いに使う費用の科目は？", options: ["通信費", "水道光熱費", "旅費交通費", "支払手数料"], answer: 0 },
+      { type: "mc", difficulty: "basic", prompt: "出張や移動にかかった費用に使う科目は？", options: ["旅費交通費", "通信費", "保管費", "諸会費"], answer: 0 },
+      { type: "mc", difficulty: "standard", prompt: "振込手数料を支払ったときに使う費用の科目は？", options: ["支払手数料", "支払利息", "雑費", "諸会費"], answer: 0 },
+      { type: "mc", difficulty: "standard", prompt: "業界団体などへの会費の支払いに使う費用の科目は？", options: ["諸会費", "租税公課", "法定福利費", "雑費"], answer: 0 },
+      { type: "mc", difficulty: "advanced", prompt: "社会保険料の会社負担分を処理する費用の科目は？", options: ["法定福利費", "従業員預り金", "社会保険料預り金", "給料"], answer: 0 },
+    ],
+  },
+  {
+    id: "c10",
+    title: "第10章　貸倒れと貸倒引当金",
+    subtitle: "差額補充法、貸倒損失、償却債権取立益",
+    questions: [
+      { type: "mc", difficulty: "standard", prompt: "「貸倒引当金」の役割として正しいものは？", options: ["売掛金等が将来回収不能になる見積額に備える評価勘定", "固定資産の減価を表す勘定", "純資産を増やすための勘定", "税金を前払いする勘定"], answer: 0 },
+      { type: "calc", difficulty: "advanced", prompt: "差額補充法により、売掛金期末残高250,000円に4％の貸倒引当金を設定する（期首引当金残高6,000円）。貸倒引当金繰入額はいくらか。", unit: "円", answer: 4000 },
+      { type: "mc", difficulty: "standard", prompt: "「貸倒れ」が発生した場合の会計処理として正しいものは？", options: ["貸倒引当金を取り崩し、不足があれば貸倒損失として処理する", "売上を減額する", "資本金を増額する", "何もしない"], answer: 0 },
+      { type: "mc", difficulty: "advanced", prompt: "「前期に貸倒れとして処理した売掛金の一部を、当期になって現金で回収した。」この取引の貸方科目は？", options: ["償却債権取立益", "貸倒引当金", "売掛金", "貸倒損失"], answer: 0 },
+      { type: "mc", difficulty: "standard", prompt: "決算で見積もった引当金の必要額が、期首の引当金残高より少なかった場合に生じる収益の科目は？", options: ["貸倒引当金戻入", "償却債権取立益", "雑益", "貸倒損失"], answer: 0 },
+    ],
+  },
+  {
+    id: "c11",
+    title: "第11章　有形固定資産と減価償却",
+    subtitle: "取得原価、定額法、減価償却累計額",
+    questions: [
+      { type: "mc", difficulty: "standard", prompt: "固定資産の取得原価に含めるべきものは？", options: ["購入代価に付随費用（運送費・据付費等）を加えた金額", "購入代価のみ", "減価償却累計額を差し引いた金額", "時価評価額"], answer: 0 },
+      { type: "calc", difficulty: "standard", prompt: "取得原価600,000円、残存価額0円、耐用年数10年の備品を定額法で減価償却する。年間の減価償却費はいくらか。", unit: "円", answer: 60000 },
+      { type: "mc", difficulty: "standard", prompt: "「減価償却累計額」は貸借対照表上どのように表示されるか。", options: ["固定資産のマイナス項目（評価勘定）として表示される", "負債として表示される", "純資産として表示される", "収益として表示される"], answer: 0 },
+      { type: "mc", difficulty: "advanced", prompt: "固定資産の現状を維持するための支出（発生時に費用処理するもの）を何というか。", options: ["収益的支出", "資本的支出", "設備投資", "繰延資産"], answer: 0 },
+      { type: "calc", difficulty: "advanced", prompt: "取得原価1,000,000円、残存価額100,000円、耐用年数9年の場合、定額法による年間減価償却費はいくらか。", unit: "円", answer: 100000 },
+    ],
+  },
+  {
+    id: "c12",
+    title: "第12章　株式の発行と剰余金",
+    subtitle: "資本金、繰越利益剰余金、利益準備金、未払配当金",
+    questions: [
+      { type: "mc", difficulty: "basic", prompt: "「株式を発行し、払込金額500,000円が普通預金口座に振り込まれた。」この取引の貸方科目は？", options: ["資本金", "普通預金", "繰越利益剰余金", "借入金"], answer: 0 },
+      { type: "mc", difficulty: "standard", prompt: "決算で計算した当期純利益を振り替える、純資産の科目は？", options: ["繰越利益剰余金", "資本金", "利益準備金", "当座預金"], answer: 0 },
+      { type: "mc", difficulty: "standard", prompt: "株主総会で剰余金の配当を決定したときに生じる負債の科目は？", options: ["未払配当金", "未払金", "前受金", "資本金"], answer: 0 },
+      { type: "mc", difficulty: "advanced", prompt: "会社法に基づき積み立てが義務づけられる法定準備金を何というか。", options: ["利益準備金", "資本金", "任意積立金", "未払配当金"], answer: 0 },
+    ],
+  },
+  {
+    id: "c13",
+    title: "第13章　法人税等と消費税",
+    subtitle: "仮払法人税等、未払法人税等、消費税の税抜方式",
+    questions: [
+      { type: "mc", difficulty: "standard", prompt: "中間申告により法人税等を納付したときに使う資産の科目は？", options: ["仮払法人税等", "未払法人税等", "法人税、住民税及び事業税", "仮払消費税"], answer: 0 },
+      { type: "mc", difficulty: "standard", prompt: "決算で確定した法人税等のうち、まだ納付していない金額を表す負債の科目は？", options: ["未払法人税等", "仮払法人税等", "未払消費税", "資本金"], answer: 0 },
+      { type: "mc", difficulty: "standard", prompt: "税抜方式のもとで、商品を仕入れる際に支払った消費税を処理する資産の科目は？", options: ["仮払消費税", "仮受消費税", "未払消費税", "租税公課"], answer: 0 },
+      { type: "mc", difficulty: "advanced", prompt: "決算時に仮払消費税と仮受消費税を相殺し、納付額を確定させる負債の科目は？", options: ["未払消費税", "仮払消費税", "未払法人税等", "租税公課"], answer: 0 },
+      { type: "mc", difficulty: "advanced", prompt: "「法人税、住民税及び事業税」はどのグループに分類されるか。", options: ["費用", "負債", "資産", "収益"], answer: 0 },
+    ],
+  },
+  {
+    id: "c14",
+    title: "第14章　経過勘定と訂正仕訳",
+    subtitle: "前払費用・未払費用・前受収益・未収収益、訂正仕訳",
+    questions: [
+      { type: "mc", difficulty: "standard", prompt: "支払済みだが、まだ当期の費用になっていない分を処理する資産の科目は？", options: ["前払費用", "未払費用", "前受収益", "未収収益"], answer: 0 },
+      { type: "mc", difficulty: "standard", prompt: "当期の費用として発生しているが、まだ支払っていない分を処理する負債の科目は？", options: ["未払費用", "前払費用", "未収収益", "前受収益"], answer: 0 },
+      { type: "mc", difficulty: "standard", prompt: "受け取り済みだが、まだ当期の収益になっていない分を処理する負債の科目は？", options: ["前受収益", "未収収益", "前払費用", "未払費用"], answer: 0 },
+      { type: "mc", difficulty: "standard", prompt: "当期の収益として発生しているが、まだ受け取っていない分を処理する資産の科目は？", options: ["未収収益", "前受収益", "未払費用", "前払費用"], answer: 0 },
+      { type: "mc", difficulty: "advanced", prompt: "保険料のうち3,000円は翌期分の前払いだった。決算整理仕訳の借方科目は？", options: ["前払費用", "未払費用", "保険料", "前受収益"], answer: 0 },
+      { type: "mc", difficulty: "advanced", prompt: "誤って記入した仕訳を正しい内容に修正するために行う仕訳を何というか。", options: ["訂正仕訳", "決算整理仕訳", "再振替仕訳", "見越し仕訳"], answer: 0 },
+    ],
+  },
+];
+
+
+const STAGES = RAW_STAGES.map((stage) => ({
+  ...stage,
+  questions: stage.questions.map((q, idx) => ({ ...q, id: stage.id + "-" + idx })),
+}));
+
+const ALL_QUESTIONS_BY_ID = {};
+STAGES.forEach((stage) => {
+  stage.questions.forEach((q) => { ALL_QUESTIONS_BY_ID[q.id] = q; });
+});
+
+const STAGE_TITLE_BY_ID = {};
+STAGES.forEach((s) => { STAGE_TITLE_BY_ID[s.id] = s.title; });
+
+const DIFFICULTY_LABEL = { basic: "基本", standard: "標準", advanced: "応用" };
+
+const STORAGE_KEY = "boki3-book-tracker-offline-v1";
+const EXAM_TIME_SEC = 60 * 60;
+const EXAM_PASS_SCORE = 70;
+const EXAM_MAX_QUESTIONS = 20;
+const EXAM_MIN_QUESTIONS = 5;
+
+function defaultProgress() {
+  return {
+    totalAnswered: 0,
+    totalCorrect: 0,
+    stageStats: {},
+    reviewQueue: [],
+    readChapters: [],
+    examCount: 0,
+    bestExamScore: null,
+    lastExamScore: null,
+  };
+}
+
+function loadProgress() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return defaultProgress();
+    return Object.assign(defaultProgress(), JSON.parse(raw));
+  } catch (e) {
+    return defaultProgress();
+  }
+}
+
+function saveProgress(p) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(p)); } catch (e) {}
+}
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+  }
+  return a;
+}
+
+function buildExamQuestions(readChapters) {
+  const pool = STAGES.filter((s) => readChapters.indexOf(s.id) !== -1).reduce((acc, s) => acc.concat(s.questions), []);
+  const count = Math.min(EXAM_MAX_QUESTIONS, pool.length);
+  return shuffle(pool).slice(0, count);
+}
+
+function formatTime(sec) {
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+}
+
+function accuracyTone(acc) {
+  if (acc === null) return { cls: "tone-neutral" };
+  if (acc < 0.6) return { cls: "tone-weak" };
+  if (acc < 0.8) return { cls: "tone-mid" };
+  return { cls: "tone-strong" };
+}
+
+function esc(s) {
+  const d = document.createElement("div");
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+let progress = loadProgress();
+let screen = "dashboard";
+let activeStageId = null;
+let reviewQuestions = null;
+let quizState = null;
+let examState = null;
+let lastResult = null;
+let examResult = null;
+
+const root = document.getElementById("app");
+
+function updateProgress(mutator) {
+  progress = mutator(progress);
+  saveProgress(progress);
+}
+
+function handleAnswered(id, correct) {
+  const stageId = id.split("-")[0];
+  updateProgress((prev) => {
+    let queue = prev.reviewQueue.slice();
+    if (correct) queue = queue.filter((q) => q !== id);
+    else if (queue.indexOf(id) === -1) queue.push(id);
+    const prevStat = prev.stageStats[stageId] || { answered: 0, correct: 0 };
+    const nextStat = { answered: prevStat.answered + 1, correct: prevStat.correct + (correct ? 1 : 0) };
+    const stageStats = Object.assign({}, prev.stageStats);
+    stageStats[stageId] = nextStat;
+    return Object.assign({}, prev, {
+      totalAnswered: prev.totalAnswered + 1,
+      totalCorrect: prev.totalCorrect + (correct ? 1 : 0),
+      stageStats: stageStats,
+      reviewQueue: queue,
+    });
+  });
+}
+
+function toggleRead(stageId) {
+  updateProgress((prev) => {
+    const has = prev.readChapters.indexOf(stageId) !== -1;
+    const readChapters = has ? prev.readChapters.filter((id) => id !== stageId) : prev.readChapters.concat([stageId]);
+    return Object.assign({}, prev, { readChapters: readChapters });
+  });
+  render();
+}
+
+function renderDashboard() {
+  const overallAcc = progress.totalAnswered > 0 ? progress.totalCorrect / progress.totalAnswered : null;
+  const readCount = progress.readChapters.length;
+  const reviewCount = progress.reviewQueue.length;
+  const examPoolSize = STAGES.filter((s) => progress.readChapters.indexOf(s.id) !== -1).reduce((a, s) => a + s.questions.length, 0);
+  const canStartExam = examPoolSize >= EXAM_MIN_QUESTIONS;
+
+  const readRows = STAGES.map(function (stage) {
+    const st = progress.stageStats[stage.id];
+    const acc = st && st.answered > 0 ? st.correct / st.answered : null;
+    return { stage: stage, acc: acc };
+  }).filter(function (r) { return progress.readChapters.indexOf(r.stage.id) !== -1 && r.acc !== null && r.acc < 0.8; })
+    .sort(function (a, b) { return a.acc - b.acc; });
+  const weakest = readRows[0];
+
+  let html = "";
+  html += '<div class="px-6 pt-8 pb-5">';
+  html += '<div class="eyebrow">スッキリわかる日商簿記3級 対応（オフライン版）</div>';
+  html += '<h1 class="h1">学習分析</h1>';
+  html += "</div>";
+
+  html += '<div class="px-6 mb-6 grid2">';
+  html += '<div class="card stat"><div class="stat-label">読んだ章</div><div class="stat-value">' + readCount + '<span class="stat-sub">/' + STAGES.length + '</span></div></div>';
+  html += '<div class="card stat"><div class="stat-label">全体正答率</div><div class="stat-value">' + (overallAcc === null ? "—" : Math.round(overallAcc * 100) + "%") + '</div></div>';
+  html += "</div>";
+
+  html += '<div class="px-6 mb-6">';
+  html += '<button class="exam-btn" data-action="start-exam" ' + (canStartExam ? "" : "disabled") + '><span class="exam-btn-left">📝 模擬試験（60分・読んだ章から最大' + EXAM_MAX_QUESTIONS + '問）</span>';
+  html += progress.lastExamScore !== null ? '<span class="mono exam-btn-score">前回 ' + progress.lastExamScore + '点</span>' : "";
+  html += "</button>";
+  if (!canStartExam) {
+    html += '<div class="exam-sub">章を' + EXAM_MIN_QUESTIONS + '問分以上「読んだ」にすると挑戦できます</div>';
+  }
+  if (progress.bestExamScore !== null) {
+    html += '<div class="exam-sub">最高スコア ' + progress.bestExamScore + '点 ・ 受験回数 ' + progress.examCount + '回</div>';
+  }
+  html += "</div>";
+
+  if (weakest) {
+    html += '<div class="px-6 mb-6">';
+    html += '<div class="insight insight-weak">📉 苦手分野は <b>' + esc(weakest.stage.title) + '</b> <span class="mono">' + Math.round(weakest.acc * 100) + '%</span></div>';
+    html += "</div>";
+  }
+
+  html += '<div class="px-6"><div class="section-label">章一覧（本の目次順）</div><div class="card list">';
+  STAGES.forEach(function (stage) {
+    const st = progress.stageStats[stage.id];
+    const acc = st && st.answered > 0 ? st.correct / st.answered : null;
+    const tone = accuracyTone(acc);
+    const pct = acc === null ? 0 : Math.round(acc * 100);
+    const isRead = progress.readChapters.indexOf(stage.id) !== -1;
+    html += '<div class="stage-item ' + (isRead ? "" : "stage-item-dim") + '">';
+    html += '<button class="read-toggle" data-action="toggle-read" data-stage="' + stage.id + '">' + (isRead ? '<span class="check-on">✓</span>' : '<span class="check-off"></span>') + '</button>';
+    html += '<button class="stage-row" data-action="select-stage" data-stage="' + stage.id + '">';
+    html += '<div class="stage-row-main">';
+    html += '<div class="stage-row-top"><span class="stage-title">' + esc(stage.title) + '</span><span class="mono ' + tone.cls + '">' + (acc === null ? (isRead ? "未挑戦" : "未読") : pct + "%") + '</span></div>';
+    html += '<div class="bar-track"><div class="bar-fill ' + tone.cls + '-bg" style="width:' + (acc === null ? 0 : pct) + '%"></div></div>';
+    html += '<div class="stage-sub">' + esc(stage.subtitle) + '</div>';
+    html += '</div><div class="chev">›</div></button></div>';
+  });
+  html += "</div></div>";
+
+  html += '<div class="px-6 mt-6 pb-8">';
+  html += '<button class="review-btn" data-action="open-review" ' + (reviewCount === 0 ? "disabled" : "") + '>';
+  html += '<span>📋 間違えた問題を復習する</span><span class="mono">' + reviewCount + '問</span>';
+  html += "</button></div>";
+
+  root.innerHTML = html;
+}
+
+function startQuiz(stageId) {
+  const stage = STAGES.find(function (s) { return s.id === stageId; });
+  quizState = { stageId: stageId, title: stage.title, questions: stage.questions, index: 0, selected: null, calcInput: "", revealed: false, correctCount: 0, isReviewMode: false };
+  screen = "quiz";
+  render();
+}
+
+function startReview() {
+  const questions = progress.reviewQueue.map(function (id) { return ALL_QUESTIONS_BY_ID[id]; }).filter(Boolean);
+  if (questions.length === 0) return;
+  quizState = { stageId: "review", title: "復習", questions: questions, index: 0, selected: null, calcInput: "", revealed: false, correctCount: 0, isReviewMode: true };
+  screen = "quiz";
+  render();
+}
+
+function currentQuizQuestion() { return quizState.questions[quizState.index]; }
+
+function quizIsCorrect() {
+  const q = currentQuizQuestion();
+  if (q.type === "mc") return quizState.selected === q.answer;
+  const val = parseInt(String(quizState.calcInput).replace(/[,，]/g, ""), 10);
+  return val === q.answer;
+}
+
+function renderQuiz() {
+  const q = currentQuizQuestion();
+  const total = quizState.questions.length;
+
+  let html = "";
+  html += '<div class="topbar"><button class="back-btn" data-action="back-dashboard">←</button><div class="topbar-title">' + esc(quizState.title) + "</div></div>";
+
+  html += '<div class="px-6 pt-4"><div class="progress-dots">';
+  quizState.questions.forEach(function (_, i) {
+    let cls = "dot-todo";
+    if (i < quizState.index) cls = "dot-done";
+    else if (i === quizState.index) cls = "dot-current";
+    html += '<div class="dot ' + cls + '"></div>';
+  });
+  html += "</div></div>";
+
+  html += '<div class="quiz-wrap"><div class="quiz-inner">';
+  html += '<div class="card qcard">';
+  html += '<div class="qcard-top"><span class="mono muted">' + (quizState.index + 1) + " / " + total + '</span><span class="diff-badge diff-' + q.difficulty + '">' + DIFFICULTY_LABEL[q.difficulty] + "</span></div>";
+  html += '<p class="qprompt">' + esc(q.prompt) + "</p>";
+
+  if (q.type === "mc") {
+    html += '<div class="opt-list">';
+    q.options.forEach(function (opt, i) {
+      let cls = "opt";
+      if (quizState.revealed) {
+        if (i === q.answer) cls = "opt opt-correct";
+        else if (i === quizState.selected) cls = "opt opt-wrong";
+        else cls = "opt opt-dim";
+      } else if (quizState.selected === i) {
+        cls = "opt opt-selected";
+      }
+      html += '<button class="' + cls + '" data-action="select-option" data-idx="' + i + '" ' + (quizState.revealed ? "disabled" : "") + ">" + esc(opt);
+      if (quizState.revealed && i === q.answer) html += ' <span class="mark mark-ok">✓</span>';
+      if (quizState.revealed && i === quizState.selected && i !== q.answer) html += ' <span class="mark mark-ng">×</span>';
+      html += "</button>";
+    });
+    html += "</div>";
+  } else {
+    html += '<div class="calc-row"><input type="number" inputmode="numeric" class="calc-input ' + (quizState.revealed ? (quizIsCorrect() ? "calc-ok" : "calc-ng") : "") + '" placeholder="数字を入力" value="' + esc(quizState.calcInput) + '" ' + (quizState.revealed ? "disabled" : "") + ' data-action="calc-input" />';
+    html += '<span class="unit">' + esc(q.unit) + "</span></div>";
+    if (quizState.revealed && !quizIsCorrect()) {
+      html += '<div class="answer-note mono">正解：' + q.answer.toLocaleString() + " " + esc(q.unit) + "</div>";
+    }
+  }
+  html += "</div>";
+
+  html += '<div class="qactions">';
+  if (!quizState.revealed) {
+    const disabled = q.type === "mc" ? quizState.selected === null : quizState.calcInput === "";
+    html += '<button class="primary-btn" data-action="submit-answer" ' + (disabled ? "disabled" : "") + ">解答する</button>";
+  } else {
+    html += '<button class="primary-btn" data-action="next-question">' + (quizState.index + 1 < total ? "次の問題へ" : "結果を見る") + "</button>";
+  }
+  html += "</div>";
+  html += "</div></div>";
+  root.innerHTML = html;
+
+  const input = root.querySelector('[data-action="calc-input"]');
+  if (input) {
+    input.focus();
+    const val = input.value;
+    input.value = "";
+    input.value = val;
+  }
+}
+
+function renderResult() {
+  const acc = lastResult.total > 0 ? lastResult.correctCount / lastResult.total : 0;
+  const tone = accuracyTone(acc);
+  let html = "";
+  html += '<div class="center-wrap"><div class="center-inner">';
+  html += '<div class="muted small">' + esc(lastResult.title) + "</div>";
+  html += '<div class="mono big-score ' + tone.cls + '">' + Math.round(acc * 100) + "%</div>";
+  html += '<div class="muted mb32">' + lastResult.correctCount + " / " + lastResult.total + " 問正解</div>";
+  html += '<div class="btn-row">';
+  html += '<button class="secondary-btn" data-action="retry-quiz">↺ もう一度</button>';
+  html += '<button class="primary-btn" data-action="back-dashboard">分析へ戻る</button>';
+  html += "</div></div></div>";
+  root.innerHTML = html;
+}
+
+function startExam() {
+  const questions = buildExamQuestions(progress.readChapters);
+  examState = { questions: questions, index: 0, answers: {}, timeLeft: EXAM_TIME_SEC, confirming: false };
+  screen = "exam";
+  render();
+  startExamTimer();
+}
+
+function startExamTimer() {
+  stopExamTimer();
+  examState.timerId = setInterval(function () {
+    if (!examState) return;
+    examState.timeLeft -= 1;
+    if (examState.timeLeft <= 0) { finishExam(); return; }
+    updateTimerDisplay();
+  }, 1000);
+}
+
+function stopExamTimer() {
+  if (examState && examState.timerId) { clearInterval(examState.timerId); examState.timerId = null; }
+}
+
+function updateTimerDisplay() {
+  const el = document.getElementById("exam-timer");
+  if (!el) return;
+  el.textContent = formatTime(examState.timeLeft);
+  el.className = "mono timer" + (examState.timeLeft < 300 ? " timer-low" : "");
+}
+
+function finishExam() {
+  stopExamTimer();
+  const perQuestion = examState.questions.map(function (q) {
+    const a = examState.answers[q.id];
+    const correct = q.type === "mc" ? a === q.answer : parseInt(String(a === undefined ? "" : a).replace(/[,，]/g, ""), 10) === q.answer;
+    return { id: q.id, correct: correct };
+  });
+  const correctCount = perQuestion.filter(function (p) { return p.correct; }).length;
+  const result = {
+    perQuestion: perQuestion,
+    correctCount: correctCount,
+    total: examState.questions.length,
+    score: Math.round((correctCount / examState.questions.length) * 100),
+    timeUsedSec: EXAM_TIME_SEC - examState.timeLeft,
+  };
+
+  updateProgress(function (prev) {
+    let queue = prev.reviewQueue.slice();
+    let stageStats = Object.assign({}, prev.stageStats);
+    let totalAnswered = prev.totalAnswered;
+    let totalCorrect = prev.totalCorrect;
+    result.perQuestion.forEach(function (p) {
+      const stageId = p.id.split("-")[0];
+      if (p.correct) queue = queue.filter(function (q) { return q !== p.id; });
+      else if (queue.indexOf(p.id) === -1) queue.push(p.id);
+      const prevStat = stageStats[stageId] || { answered: 0, correct: 0 };
+      stageStats[stageId] = { answered: prevStat.answered + 1, correct: prevStat.correct + (p.correct ? 1 : 0) };
+      totalAnswered += 1;
+      totalCorrect += p.correct ? 1 : 0;
+    });
+    return Object.assign({}, prev, {
+      reviewQueue: queue, stageStats: stageStats, totalAnswered: totalAnswered, totalCorrect: totalCorrect,
+      examCount: prev.examCount + 1, lastExamScore: result.score,
+      bestExamScore: prev.bestExamScore === null ? result.score : Math.max(prev.bestExamScore, result.score),
+    });
+  });
+
+  examResult = result;
+  screen = "examResult";
+  examState = null;
+  render();
+}
+
+function renderExam() {
+  const q = examState.questions[examState.index];
+  const unansweredCount = examState.questions.length - Object.keys(examState.answers).length;
+
+  let html = "";
+  html += '<div class="topbar"><button class="back-btn" data-action="exit-exam">←</button><div class="topbar-title">模擬試験</div><div id="exam-timer" class="mono timer' + (examState.timeLeft < 300 ? " timer-low" : "") + '">' + formatTime(examState.timeLeft) + "</div></div>";
+
+  html += '<div class="px-6 pt-4"><div class="nav-grid">';
+  examState.questions.forEach(function (qq, i) {
+    const answered = examState.answers[qq.id] !== undefined;
+    let cls = "navcell";
+    if (i === examState.index) cls += " navcell-current";
+    else if (answered) cls += " navcell-answered";
+    html += '<button class="' + cls + '" data-action="exam-jump" data-idx="' + i + '">' + (i + 1) + "</button>";
+  });
+  html += "</div></div>";
+
+  html += '<div class="quiz-wrap"><div class="quiz-inner">';
+  html += '<div class="card qcard">';
+  html += '<div class="qcard-top"><span class="mono muted">問' + (examState.index + 1) + " / " + examState.questions.length + '</span><span class="mono muted">' + esc(STAGE_TITLE_BY_ID[q.id.split("-")[0]]) + '</span></div>';
+  html += '<p class="qprompt">' + esc(q.prompt) + "</p>";
+
+  if (q.type === "mc") {
+    html += '<div class="opt-list">';
+    q.options.forEach(function (opt, i) {
+      const selected = examState.answers[q.id] === i;
+      html += '<button class="opt ' + (selected ? "opt-selected" : "") + '" data-action="exam-select" data-idx="' + i + '">' + esc(opt) + "</button>";
+    });
+    html += "</div>";
+  } else {
+    const val = examState.answers[q.id] !== undefined ? examState.answers[q.id] : "";
+    html += '<div class="calc-row"><input type="number" inputmode="numeric" class="calc-input" placeholder="数字を入力" value="' + esc(String(val)) + '" data-action="exam-calc-input" />';
+    html += '<span class="unit">' + esc(q.unit) + "</span></div>";
+  }
+  html += "</div>";
+
+  html += '<div class="exam-nav-row">';
+  html += '<button class="secondary-btn" data-action="exam-prev" ' + (examState.index === 0 ? "disabled" : "") + '>‹ 前へ</button>';
+  if (examState.index + 1 < examState.questions.length) {
+    html += '<button class="primary-btn" data-action="exam-next">次へ ›</button>';
+  } else {
+    html += '<button class="primary-btn" data-action="exam-confirm-submit">提出して採点する</button>';
+  }
+  html += "</div>";
+
+  if (examState.confirming) {
+    html += '<div class="card confirm-box">';
+    html += "<p>" + (unansweredCount > 0 ? "未回答が" + unansweredCount + "問あります。提出しますか？" : "すべて回答済みです。提出しますか？") + "</p>";
+    html += '<div class="btn-row-end"><button class="secondary-btn" data-action="exam-cancel-submit">戻る</button><button class="primary-btn" data-action="exam-submit">提出する</button></div>';
+    html += "</div>";
+  }
+
+  html += "</div></div>";
+  root.innerHTML = html;
+
+  const input = root.querySelector('[data-action="exam-calc-input"]');
+  if (input) input.focus();
+}
+
+function renderExamResult() {
+  const pass = examResult.score >= EXAM_PASS_SCORE;
+  const map = {};
+  examResult.perQuestion.forEach(function (p) {
+    const stageId = p.id.split("-")[0];
+    if (!map[stageId]) map[stageId] = { correct: 0, total: 0 };
+    map[stageId].total += 1;
+    if (p.correct) map[stageId].correct += 1;
+  });
+  const breakdown = Object.keys(map).map(function (stageId) {
+    const v = map[stageId];
+    return { stageId: stageId, title: STAGE_TITLE_BY_ID[stageId], correct: v.correct, total: v.total };
+  }).sort(function (a, b) { return (a.correct / a.total) - (b.correct / b.total); });
+
+  let html = "";
+  html += '<div class="exam-result-wrap"><div class="exam-result-inner">';
+  html += '<div class="muted small">模擬試験 結果</div>';
+  html += '<div class="mono big-score ' + (pass ? "tone-strong" : "tone-weak") + '">' + examResult.score + "</div>";
+  html += '<div class="pass-badge ' + (pass ? "pass-badge-ok" : "pass-badge-ng") + '">' + (pass ? "合格ライン到達（70点以上）" : "合格ラインまであと一歩") + "</div>";
+  html += '<div class="muted">' + examResult.correctCount + " / " + examResult.total + " 問正解</div>";
+  html += '<div class="mono muted small mb32">所要時間 ' + formatTime(examResult.timeUsedSec) + "</div>";
+
+  html += '<div class="section-label left">章別の結果</div><div class="card list mb32">';
+  breakdown.forEach(function (row) {
+    const acc = row.correct / row.total;
+    const tone = accuracyTone(acc);
+    html += '<div class="stage-row-static"><span>' + esc(row.title) + '</span><span class="mono ' + tone.cls + '">' + row.correct + "/" + row.total + "</span></div>";
+  });
+  html += "</div>";
+
+  html += '<div class="btn-row">';
+  html += '<button class="secondary-btn" data-action="retry-exam">↺ もう一度受験</button>';
+  html += '<button class="primary-btn" data-action="back-dashboard">分析へ戻る</button>';
+  html += "</div></div></div>";
+  root.innerHTML = html;
+}
+
+function render() {
+  if (screen === "dashboard") renderDashboard();
+  else if (screen === "quiz") renderQuiz();
+  else if (screen === "result") renderResult();
+  else if (screen === "exam") renderExam();
+  else if (screen === "examResult") renderExamResult();
+}
+
+root.addEventListener("click", function (e) {
+  const btn = e.target.closest("[data-action]");
+  if (!btn || btn.disabled) return;
+  const action = btn.dataset.action;
+
+  if (action === "select-stage") {
+    startQuiz(btn.dataset.stage);
+  } else if (action === "toggle-read") {
+    toggleRead(btn.dataset.stage);
+  } else if (action === "start-exam") {
+    startExam();
+  } else if (action === "open-review") {
+    startReview();
+  } else if (action === "back-dashboard") {
+    stopExamTimer();
+    examState = null;
+    screen = "dashboard";
+    render();
+  } else if (action === "select-option") {
+    quizState.selected = parseInt(btn.dataset.idx, 10);
+    render();
+  } else if (action === "submit-answer") {
+    const q = currentQuizQuestion();
+    const correct = quizIsCorrect();
+    quizState.revealed = true;
+    if (correct) quizState.correctCount += 1;
+    handleAnswered(q.id, correct);
+    render();
+  } else if (action === "next-question") {
+    if (quizState.index + 1 < quizState.questions.length) {
+      quizState.index += 1;
+      quizState.selected = null;
+      quizState.calcInput = "";
+      quizState.revealed = false;
+      render();
+    } else {
+      lastResult = { title: quizState.title, correctCount: quizState.correctCount, total: quizState.questions.length };
+      screen = "result";
+      render();
+    }
+  } else if (action === "retry-quiz") {
+    if (quizState && quizState.isReviewMode) startReview();
+    else if (quizState) startQuiz(quizState.stageId);
+  } else if (action === "exam-jump") {
+    examState.index = parseInt(btn.dataset.idx, 10);
+    render();
+  } else if (action === "exam-select") {
+    const q = examState.questions[examState.index];
+    examState.answers[q.id] = parseInt(btn.dataset.idx, 10);
+    render();
+  } else if (action === "exam-prev") {
+    examState.index = Math.max(0, examState.index - 1);
+    render();
+  } else if (action === "exam-next") {
+    examState.index += 1;
+    render();
+  } else if (action === "exam-confirm-submit") {
+    examState.confirming = true;
+    render();
+  } else if (action === "exam-cancel-submit") {
+    examState.confirming = false;
+    render();
+  } else if (action === "exam-submit") {
+    finishExam();
+  } else if (action === "exit-exam") {
+    stopExamTimer();
+    examState = null;
+    screen = "dashboard";
+    render();
+  } else if (action === "retry-exam") {
+    startExam();
+  }
+});
+
+root.addEventListener("input", function (e) {
+  const el = e.target;
+  if (el.dataset.action === "calc-input") {
+    quizState.calcInput = el.value;
+    const submitBtn = root.querySelector('[data-action="submit-answer"]');
+    if (submitBtn) submitBtn.disabled = el.value === "";
+  } else if (el.dataset.action === "exam-calc-input") {
+    const q = examState.questions[examState.index];
+    examState.answers[q.id] = el.value;
+  }
+});
+
+render();
+
+</script>
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.register("sw.js").catch(function () {});
+  });
+}
+</script>
+</body>
+</html>
